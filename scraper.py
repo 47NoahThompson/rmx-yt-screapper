@@ -62,7 +62,11 @@ def get_channel_videos(channel_url):
 
 if __name__ == "__main__":
 
-    channel_url = input("Enter YouTube channel URL: ").strip()
+    # GitHub Actions can override this setting.
+    channel_url = os.getenv(
+        "YOUTUBE_CHANNEL_URL",
+        "https://www.youtube.com/@RightMoveRX/videos"
+    )
 
     videos = get_channel_videos(channel_url)
     output_path = Path(__file__).with_name("videos.json")
