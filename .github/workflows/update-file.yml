@@ -1,20 +1,18 @@
-name: Update Repository File
+
+name: Update RightMoveRX Videos
 
 on:
-  workflow_dispatch: # Allows manual runs from GitHub
-  push:
-    branches:
-      - main
-    paths:
-      - 'scrapper.py'
-      - 'requirements.txt'
-      - '.github/workflows/update-file.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: update-videos
+  cancel-in-progress: false
+
 jobs:
-  update-file:
+  scrape:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,28 +22,30 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+        run: python -m pip install -r requirements.txt
 
-      - name: Run Python script
-        run: python scrapper.py
+      - name: Run YouTube scraper
+        env:
+          YOUTUBE_CHANNEL_URL: https://www.youtube.com/@RightMoveRX/videos
+        run: python scraper.py
 
-      - name: Commit and push changes
+      - name: Validate JSON
+        run: python -m json.tool videos.json > /dev/null
+
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add videos.json
 
           if ! git diff --cached --quiet; then
-            git commit -m "Update videos.json"
+            git commit -m "Update RightMoveRX video database"
             git push
           else
-            echo "No changes to commit."
+            echo "No new videos to commit."
           fi
